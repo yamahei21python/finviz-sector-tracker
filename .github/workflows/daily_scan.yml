@@ -1,0 +1,35 @@
+name: Daily Finviz Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 毎日 0:00 UTC (日本時間 9:00)
+  workflow_dispatch: # 手動実行用
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+
+      - name: Run scanner
+        run: python finviz_sector_tracker.py
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update Finviz history DB [skip ci]"
+          file_pattern: "*.db"
